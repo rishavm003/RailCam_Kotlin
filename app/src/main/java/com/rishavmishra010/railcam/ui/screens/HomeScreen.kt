@@ -65,12 +65,11 @@ fun HomeScreen(
     val coroutineScope = rememberCoroutineScope()
 
     val validationError = FilenameGenerator.validate(metadata)
-    val isValid = validationError == null
+    val isValid = true
     
     val generatedFilename by remember {
         androidx.compose.runtime.derivedStateOf {
             val currentMetadata = metadataState.value
-            if (FilenameGenerator.validate(currentMetadata) != null) return@derivedStateOf null
             FilenameGenerator.generate(currentMetadata, System.currentTimeMillis())
         }
     }

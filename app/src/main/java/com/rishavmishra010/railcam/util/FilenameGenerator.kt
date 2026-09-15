@@ -53,17 +53,7 @@ object FilenameGenerator {
     }
 
     fun validate(metadata: MetadataValues): String? {
-        if (metadata.client == Client.METRO && metadata.lineDetails.isBlank()) {
-            return "Line Details is required for Metro"
-        }
-        if (metadata.zoneOrSubClient.isBlank()) return "Zone / network selection is required"
-        if (metadata.kmMarker.isBlank()) {
-            val label = if (metadata.railType == RailType.TANGENT) "Tangent Name" else "Curve Name"
-            return "$label is required"
-        }
-        if (metadata.oheNumber.isBlank()) return "OHE Number is required"
-        if (metadata.sessionDate.isBlank()) return "Session date is required"
-        if (!SESSION_DATE_PATTERN.matches(metadata.sessionDate)) {
+        if (metadata.sessionDate.isNotBlank() && !SESSION_DATE_PATTERN.matches(metadata.sessionDate)) {
             return "Session date must be DD-MM-YYYY"
         }
         return null
