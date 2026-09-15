@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Subtle amber glow ring -->
+    <path
+        android:fillColor="#33E8A020"
+        android:pathData="M54,54m-40,0a40,40 0,1 1,80 0a40,40 0,1 1,-80 0" />
+
+    <!-- Camera body -->
+    <path
+        android:fillColor="#1C1C1C"
+        android:pathData="M30,38 L42,38 L46,32 L62,32 L66,38 L78,38 C81,38 83,40 83,43 L83,70 C83,73 81,75 78,75 L30,75 C27,75 25,73 25,70 L25,43 C25,40 27,38 30,38 Z" />
+
+    <!-- Lens outer ring -->
+    <path
+        android:fillColor="#E8A020"
+        android:pathData="M54,57m-16,0a16,16 0,1 1,32 0a16,16 0,1 1,-32 0" />
+
+    <!-- Lens inner -->
+    <path
+        android:fillColor="#0A0A0A"
+        android:pathData="M54,57m-11,0a11,11 0,1 1,22 0a11,11 0,1 1,-22 0" />
+
+    <!-- Lens highlight -->
+    <path
+        android:fillColor="#33FFFFFF"
+        android:pathData="M48,52m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+
+    <!-- Rail track left line -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M22,82 L86,82"
+        android:strokeWidth="3"
+        android:strokeColor="#E8A020"
+        android:strokeLineCap="round" />
+
+    <!-- Rail track right line -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M22,88 L86,88"
+        android:strokeWidth="3"
+        android:strokeColor="#888888"
+        android:strokeLineCap="round" />
+
+    <!-- Rail tie marks -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M32,80 L32,90 M44,80 L44,90 M56,80 L56,90 M68,80 L68,90 M80,80 L80,90"
+        android:strokeWidth="2"
+        android:strokeColor="#555555"
+        android:strokeLineCap="round" />
+
+    <!-- Top-left viewfinder bracket -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M18,24 L18,34 M18,24 L28,24"
+        android:strokeWidth="3"
+        android:strokeColor="#E8A020"
+        android:strokeLineCap="round" />
+
+    <!-- Top-right viewfinder bracket -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M90,24 L90,34 M90,24 L80,24"
+        android:strokeWidth="3"
+        android:strokeColor="#E8A020"
+        android:strokeLineCap="round" />
+
+    <!-- Bottom-left viewfinder bracket -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M18,96 L18,86 M18,96 L28,96"
+        android:strokeWidth="3"
+        android:strokeColor="#E8A020"
+        android:strokeLineCap="round" />
+
+    <!-- Bottom-right viewfinder bracket -->
+    <path
+        android:fillColor="#00000000"
+        android:pathData="M90,96 L90,86 M90,96 L80,96"
+        android:strokeWidth="3"
+        android:strokeColor="#E8A020"
+        android:strokeLineCap="round" />
+
+</vector>
