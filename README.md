@@ -8,6 +8,15 @@
   <b>Professional Rail Grinding Inspection & Metadata-Stamped Field Capture Android Application</b>
 </p>
 
+<p align="center">
+  <a href="https://github.com/rishavm003/RailCam_Kotlin/releases">
+    <img src="https://img.shields.io/badge/Download%20APK-v1.0.0-orange?style=for-the-badge&logo=android&logoColor=white" alt="Download APK" />
+  </a>
+  <a href="https://github.com/rishavm003/RailCam_Kotlin/releases">
+    <img src="https://img.shields.io/github/v/release/rishavm003/RailCam_Kotlin?style=for-the-badge&color=blue" alt="Latest Release" />
+  </a>
+</p>
+
 ---
 
 ## 📌 Overview
