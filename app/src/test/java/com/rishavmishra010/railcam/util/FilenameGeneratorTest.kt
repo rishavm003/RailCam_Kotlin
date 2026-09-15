@@ -76,15 +76,18 @@ class FilenameGeneratorTest {
     }
 
     @Test
-    fun validate_requiresMetroLineDetails() {
-        val invalidMetro = MetadataValues(
-            client = Client.METRO,
-            zoneOrSubClient = "DMRC",
-            lineDetails = "",
-            kmMarker = "12",
-            oheNumber = "34"
+    fun generate_emptyMetadataFallbackM1() {
+        val emptyMetadata = MetadataValues(
+            client = Client.INDIAN_RAILWAY,
+            testSiteName = "",
+            stationCode = "",
+            zoneOrSubClient = "",
+            oheNumber = "",
+            kmMarker = "",
+            sessionDate = ""
         )
-        assertNotNull(FilenameGenerator.validate(invalidMetro))
+        val filename = FilenameGenerator.generate(emptyMetadata, 1_700_000_000_000L)
+        assertEquals("M_1_IR_M_1_M_1_UP_M_1_M_1_LEFT_M_1.jpg", filename)
     }
 
     @Test

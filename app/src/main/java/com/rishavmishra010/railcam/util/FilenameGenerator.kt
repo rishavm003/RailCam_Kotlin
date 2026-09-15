@@ -7,42 +7,43 @@ import com.rishavmishra010.railcam.domain.model.RailType
 object FilenameGenerator {
 
     fun generateBaseFilename(metadata: MetadataValues): String {
-        val site = sanitizeToken(metadata.testSiteName)
-        val station = sanitizeToken(metadata.stationCode)
+        val site = sanitizeToken(metadata.testSiteName, fallback = "M_1")
+        val station = sanitizeToken(metadata.stationCode, fallback = "M_1")
         val direction = metadata.direction.name
-        val ohe = sanitizeToken(metadata.oheNumber)
-        val km = sanitizeToken(metadata.kmMarker) // Curve or Tangent Name
+        val ohe = sanitizeToken(metadata.oheNumber, fallback = "M_1")
+        val km = sanitizeToken(metadata.kmMarker, fallback = "M_1") // Curve or Tangent Name
         val railPosOrSide = sanitizeToken(
             if (metadata.railType == RailType.CURVE) {
                 metadata.railPosition.displayName
             } else {
                 metadata.railSide.name
-            }
+            },
+            fallback = "M_1"
         )
 
         val parts = when (metadata.client) {
             Client.INDIAN_RAILWAY -> {
                 val clientCode = metadata.client.fileCode
-                val zone = sanitizeToken(metadata.zoneOrSubClient)
+                val zone = sanitizeToken(metadata.zoneOrSubClient, fallback = "M_1")
                 listOf(site, clientCode, zone, station, direction, ohe, km, railPosOrSide)
             }
             Client.DFCCIL -> {
                 val clientCode = metadata.client.fileCode
-                val corridor = sanitizeToken(metadata.zoneOrSubClient)
+                val corridor = sanitizeToken(metadata.zoneOrSubClient, fallback = "M_1")
                 listOf(site, clientCode, corridor, station, direction, km, railPosOrSide, ohe)
             }
             Client.METRO -> {
-                val metroNetwork = sanitizeToken(metadata.zoneOrSubClient)
-                val lineDetails = sanitizeToken(metadata.lineDetails)
+                val metroNetwork = sanitizeToken(metadata.zoneOrSubClient, fallback = "M_1")
+                val lineDetails = sanitizeToken(metadata.lineDetails, fallback = "M_1")
                 listOf(site, metroNetwork, lineDetails, station, direction, km, railPosOrSide, ohe)
             }
         }
 
-        return parts.filter { it.isNotBlank() }.joinToString("_")
+        return parts.joinToString("_")
     }
 
     fun generate(metadata: MetadataValues, timestamp: Long): String {
-        val sessionDate = metadata.sessionDate.replace("-", "")
+        val sessionDate = if (metadata.sessionDate.isNotBlank()) metadata.sessionDate.replace("-", "") else "M_1"
         val baseName = generateBaseFilename(metadata)
         return "${baseName}_${sessionDate}.jpg"
     }
@@ -59,8 +60,10 @@ object FilenameGenerator {
         return null
     }
 
-    private fun sanitizeToken(value: String): String =
-        value.trim().uppercase().replace(Regex("[^A-Z0-9]"), "_").trim('_')
+    private fun sanitizeToken(value: String, fallback: String = "M_1"): String {
+        val sanitized = value.trim().uppercase().replace(Regex("[^A-Z0-9]"), "_").trim('_')
+        return if (sanitized.isBlank()) fallback else sanitized
+    }
 
     private val SESSION_DATE_PATTERN = Regex("^\\d{2}-\\d{2}-\\d{4}$")
 }
