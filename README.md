@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <b>Professional Rail Grinding Inspection & Metadata-Stamped Field Capture Android Application</b>
+  <b>Professional Rail Grinding Inspection & Metadata-Tagged Field Capture Android Application</b>
 </p>
 
 <p align="center">
@@ -25,7 +25,7 @@
 
 During rail grinding and track maintenance field operations, capturing accurately documented photo evidence is crucial for compliance, auditability, structural integrity reporting, and profile grinding quality control. Standard camera apps fail to enforce strict naming conventions, pitch/tilt alignment, dynamic metadata embedding, or offline persistence. 
 
-**RailCam** bridges this gap by automatically burning standardized metadata directly onto captured images, calculating real-time device level/tilt angle, generating standardized file names, and providing seamless offline-first document sharing capabilities.
+**RailCam** bridges this gap by automatically recording standardized metadata with every captured image, calculating real-time device level/tilt angle, generating standardized file names, and providing seamless offline-first document sharing capabilities.
 
 ---
 
@@ -38,10 +38,10 @@ During rail grinding and track maintenance field operations, capturing accuratel
 
 <br/>
 
-| 4. Instant Review Screen | 5. Stamped Photo Preview & Export |
+| 4. Instant Review Screen | 5. Photo Preview & Export |
 | :---: | :---: |
 | <img src="assets/screenshot_review.jpg" width="380" /> | <img src="assets/screenshot_preview.jpg" width="260" /> |
-| **Quick Retake / Keep Workflow** | **Burned Metadata Watermark & Share** |
+| **Quick Retake / Keep Workflow** | **Metadata Details Panel & Share** |
 
 ---
 
@@ -60,8 +60,8 @@ During rail grinding and track maintenance field operations, capturing accuratel
 - **Color-Coded Feedback**: Displays green indicator when aligned within $\pm 2.0^\circ$ tolerance, warning yellow/red when off-level.
 - **Horizontal Guide Line**: Overlays a horizontal reference guide across the camera viewfinder to ensure level rail profile captures.
 
-### 3. 🖼️ Dynamic Image Metadata Stamping & Watermarking
-- **On-Image Watermark Banner**: Every saved photo is dynamically stamped at the bottom with:
+### 3. 🖼️ Per-Photo Metadata Records
+- **Metadata Details Panel**: Every saved photo is stored with its session metadata (in the on-device database and in its filename) and shown in the preview screen with:
   - **Organization & Zone** (e.g. `INDIAN_RAILWAY • NR`)
   - **Timestamp** (e.g. `10 Jul 2026, 15:21`)
   - **Rail Details** (e.g. `Tangent: TAN-05 | OHE: 12/25`)
@@ -76,8 +76,8 @@ T1005_2_IR_NR_UMB_UP_139_17-19_C37_LEFT_09092026.jpg
 Eliminates manual manual file renaming errors during field data collection.
 
 ### 5. ⚡ Dual Capture Modes
-- **Normal Mode**: Opens quick review screen after capture allowing instant Retake or Keep.
-- **Instant Mode**: Continuous high-speed field capture without interrupting the inspector.
+- **Manual**: after each shot, a review screen lets you Keep or Retake the photo.
+- **Auto**: every photo is saved as soon as it is taken, for fast continuous capture.
 
 ### 6. 📴 Offline-First Room Storage & Document Export
 - Built with **Room Database** and **AndroidX Storage Access Framework**.
@@ -90,7 +90,7 @@ Eliminates manual manual file renaming errors during field data collection.
 
 | Problem in Field Inspections | How RailCam Solves It |
 | :--- | :--- |
-| ❌ Standard photos lack verified metadata and site context. | ✅ Burned-in watermark ensures tamper-proof location, OHE, and tilt verification. |
+| ❌ Standard photos lack verified metadata and site context. | ✅ Every photo is saved with its site, OHE and tilt details in a standardized filename and on-device record. |
 | ❌ Skewed/tilted camera photos distort rail grinding profile assessment. | ✅ Real-time hardware level indicator forces precise horizontal photography. |
 | ❌ Manual file renaming is tedious and prone to typos. | ✅ Automated regex-compliant filename generator formats every capture. |
 | ❌ Lack of network connectivity in remote railway tracks. | ✅ 100% offline functionality with SQLite Room database persistence. |
@@ -105,7 +105,7 @@ Eliminates manual manual file renaming errors during field data collection.
 - **Camera Engine**: CameraX API (High performance, lifecycle-aware camera engine)
 - **Local Persistence**: Room DB + Preferences DataStore
 - **Async & Reactive Flow**: Kotlin Coroutines + StateFlow
-- **Image Processing**: Android Canvas & Bitmap graphics stamper
+- **Image Processing**: Region-decoded 2:1 crop of each capture (BitmapRegionDecoder)
 
 ---
 
@@ -124,11 +124,24 @@ Eliminates manual manual file renaming errors during field data collection.
    cd RailCam_Kotlin
    ```
 
-2. **Open in Android Studio**:
+2. **(Optional) Release signing**: create `keystore.properties` in the project root (it is gitignored):
+   ```properties
+   storeFile=app/railcam-release.jks
+   storePassword=...
+   keyAlias=...
+   keyPassword=...
+   ```
+   Without it, release builds are signed with the debug key.
+
+3. **Open in Android Studio**:
    Open Android Studio -> `File` -> `Open` -> Select the `RailCam_Kotlin` folder.
 
-3. **Build & Run**:
+4. **Build & Run**:
    Connect your Android physical device via USB debugging and click **Run 'app'** (`Shift + F10`).
+
+### iOS
+
+A native SwiftUI version of the app lives in [`ios/`](ios/README.md). It has the same features and filename rules, and needs a Mac with Xcode 16+ to build (or let the `iOS build` GitHub Actions workflow compile and test it).
 
 ---
 

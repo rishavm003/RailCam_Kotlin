@@ -46,7 +46,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.rishavmishra010.railcam.R
 import com.rishavmishra010.railcam.navigation.Screen
-import com.rishavmishra010.railcam.ui.components.camera.InstantModeToggle
+import com.rishavmishra010.railcam.ui.components.camera.SaveModeSelector
 import com.rishavmishra010.railcam.ui.components.forms.MetadataForm
 import com.rishavmishra010.railcam.ui.theme.LevelGreen
 import com.rishavmishra010.railcam.util.FilenameGenerator
@@ -65,10 +65,10 @@ fun HomeScreen(
     val coroutineScope = rememberCoroutineScope()
 
     val validationError = FilenameGenerator.validate(metadata)
-    val isValid = true
+    val isValid = validationError == null
     
-    val generatedFilename by remember {
-        androidx.compose.runtime.derivedStateOf {
+    val generatedFilename: String by remember {
+        derivedStateOf {
             val currentMetadata = metadataState.value
             FilenameGenerator.generate(currentMetadata, System.currentTimeMillis())
         }
@@ -79,9 +79,10 @@ fun HomeScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .verticalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp, vertical = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp)
+            .padding(horizontal = 20.dp, vertical = 20.dp),
+        verticalArrangement = Arrangement.spacedBy(22.dp)
     ) {
+        // App Bar / Top Navigation
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -94,19 +95,41 @@ fun HomeScreen(
                 Image(
                     painter = painterResource(R.drawable.ic_railcam_logo),
                     contentDescription = "RailCam logo",
-                    modifier = Modifier.size(52.dp)
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(RoundedCornerShape(12.dp))
                 )
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            text = "RailCam",
+                            color = MaterialTheme.colorScheme.onBackground,
+                            fontSize = 26.sp,
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = (-0.5).sp
+                        )
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
+                                .padding(horizontal = 6.dp, vertical = 2.dp)
+                        ) {
+                            Text(
+                                text = "PRO",
+                                color = MaterialTheme.colorScheme.primary,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                     Text(
-                        text = "RailCam",
-                        color = MaterialTheme.colorScheme.primary,
-                        fontSize = 32.sp,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Text(
-                        text = "Rail grinding field capture",
+                        text = "Field Inspection & Capture System",
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 14.sp
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
                     )
                 }
             }
@@ -114,38 +137,56 @@ fun HomeScreen(
             IconButton(
                 onClick = { viewModel.toggleTheme() },
                 modifier = Modifier
-                    .size(48.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape)
-                    .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
+                    .size(44.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f), CircleShape)
             ) {
                 Icon(
                     imageVector = if (themeMode == "dark") Icons.Default.LightMode else Icons.Default.DarkMode,
                     contentDescription = "Toggle Theme",
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(22.dp)
                 )
             }
         }
 
+        // Main Session Form Card
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(20.dp),
             color = MaterialTheme.colorScheme.surface,
-            tonalElevation = 2.dp
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.6f)),
+            shadowElevation = 4.dp
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(16.dp))
                     .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "Session details",
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(bottom = 12.dp)
-                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column {
+                        Text(
+                            text = "SESSION CONFIGURATION",
+                            color = MaterialTheme.colorScheme.primary,
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Site & Track Parameters",
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                }
 
                 MetadataForm(
                     values = metadata,
@@ -159,27 +200,44 @@ fun HomeScreen(
                     onRailTypeChange = viewModel::updateRailType,
                     onRailSideChange = viewModel::updateRailSide,
                     onDirectionChange = viewModel::updateDirection,
-
                     onRailPositionChange = viewModel::updateRailPosition,
                     onSessionDateChange = viewModel::updateSessionDate
                 )
             }
         }
 
-        StatusChip(
-            message = validationError ?: "Ready to capture",
-            isValid = isValid
-        )
-
-        if (generatedFilename != null) {
-            Text(
-                text = "Filename: $generatedFilename",
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                fontSize = 11.sp,
-                modifier = Modifier.fillMaxWidth()
+        // Live Status & Filename Preview Card
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            StatusChip(
+                message = validationError ?: "System ready • Metadata validated",
+                isValid = isValid
             )
+
+            Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                        .padding(horizontal = 14.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Target File:",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = generatedFilename,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
         }
 
+        // Bottom Action Bar
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -188,17 +246,16 @@ fun HomeScreen(
                 onClick = { navController.navigate(Screen.Gallery.route) },
                 modifier = Modifier
                     .weight(1f)
-                    .height(52.dp),
-                shape = RoundedCornerShape(12.dp),
+                    .height(54.dp),
+                shape = RoundedCornerShape(14.dp),
                 border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)
             ) {
-                Text("Gallery", fontWeight = FontWeight.Medium)
+                Text("Gallery", fontWeight = FontWeight.SemiBold, fontSize = 15.sp)
             }
 
             Button(
                 onClick = {
-                    val finalFilename = generatedFilename ?: FilenameGenerator.generate(metadata, System.currentTimeMillis())
                     coroutineScope.launch {
                         viewModel.prepareCaptureSession()
                         navController.navigate(Screen.Capture.route)
@@ -206,9 +263,9 @@ fun HomeScreen(
                 },
                 enabled = isValid,
                 modifier = Modifier
-                    .weight(1f)
-                    .height(52.dp),
-                shape = RoundedCornerShape(12.dp),
+                    .weight(1.2f)
+                    .height(54.dp),
+                shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,
@@ -216,17 +273,17 @@ fun HomeScreen(
                     disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             ) {
-                Text("Start Camera", fontWeight = FontWeight.SemiBold)
+                Text("Start Camera", fontWeight = FontWeight.Bold, fontSize = 15.sp)
             }
         }
 
-        InstantModeToggle(
-            isInstantMode = isInstantMode,
-            onToggle = { viewModel.toggleInstantMode() },
+        SaveModeSelector(
+            isQuickSave = isInstantMode,
+            onModeSelected = { viewModel.setInstantMode(it) },
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp))
     }
 }
 
@@ -235,20 +292,20 @@ private fun StatusChip(message: String, isValid: Boolean) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(10.dp))
-            .background(if (isValid) Color(0xFF1A2E1A) else Color(0xFF2E1A1A))
+            .clip(RoundedCornerShape(12.dp))
+            .background(if (isValid) Color(0xFF0D2818) else Color(0xFF2C1011))
             .border(
                 1.dp,
-                if (isValid) LevelGreen.copy(alpha = 0.4f) else MaterialTheme.colorScheme.error.copy(alpha = 0.4f),
-                RoundedCornerShape(10.dp)
+                if (isValid) LevelGreen.copy(alpha = 0.5f) else MaterialTheme.colorScheme.error.copy(alpha = 0.5f),
+                RoundedCornerShape(12.dp)
             )
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Box(
             modifier = Modifier
-                .size(8.dp)
+                .size(10.dp)
                 .background(
                     if (isValid) LevelGreen else MaterialTheme.colorScheme.error,
                     CircleShape
@@ -257,7 +314,8 @@ private fun StatusChip(message: String, isValid: Boolean) {
         Text(
             text = message,
             color = if (isValid) LevelGreen else MaterialTheme.colorScheme.error,
-            fontSize = 13.sp
+            fontSize = 13.sp,
+            fontWeight = FontWeight.Medium
         )
     }
 }

@@ -5,7 +5,7 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [PhotoRecord::class], version = 7, exportSchema = false)
+@Database(entities = [PhotoRecord::class], version = 7, exportSchema = true)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun photoDao(): PhotoDao
 
@@ -20,7 +20,10 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "railcam_database"
                 )
-                    .fallbackToDestructiveMigration()
+                    // Schema changes must ship a Migration (see app/schemas for the exported
+                    // history) so upgrading the app never wipes the photo records. Only a
+                    // downgrade, which cannot be migrated, falls back to recreating the DB.
+                    .fallbackToDestructiveMigrationOnDowngrade()
                     .build()
                 INSTANCE = instance
                 instance

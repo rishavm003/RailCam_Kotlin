@@ -1,36 +1,11 @@
-# RailCam ProGuard rules
+# RailCam ProGuard / R8 rules
+#
+# AndroidX (Room, CameraX, Compose, DataStore), Coil and kotlinx.coroutines all ship
+# their own consumer R8 rules, so no blanket "-keep class library.** { *; }" rules are
+# needed here. Those blanket keeps stopped R8 from shrinking and optimising the libraries
+# that do the most work at runtime (CameraX, Compose runtime), making release builds
+# bigger and slower.
 
-# --- Room ---
--keep class * extends androidx.room.RoomDatabase
--keep @androidx.room.Entity class *
--keepclassmembers class * {
-    @androidx.room.* <methods>;
-}
--dontwarn androidx.room.paging.**
-
-# --- Kotlin / coroutines ---
--keepattributes *Annotation*
--keepclassmembers class kotlinx.coroutines.** {
-    volatile <fields>;
-}
--keepnames class kotlinx.coroutines.internal.MainDispatcherFactory {}
--keepnames class kotlinx.coroutines.CoroutineExceptionHandler {}
-
-# --- App models (Room entities & domain) ---
+# App models: enum names are persisted in DataStore / Room and parsed with valueOf().
 -keep class com.rishavmishra010.railcam.data.db.** { *; }
 -keep class com.rishavmishra010.railcam.domain.model.** { *; }
-
-# --- CameraX ---
--keep class androidx.camera.** { *; }
--dontwarn androidx.camera.**
-
-# --- Coil ---
--keep class coil.** { *; }
--dontwarn coil.**
-
-# --- Compose (runtime stability) ---
--dontwarn androidx.compose.**
--keep class androidx.compose.runtime.** { *; }
-
-# --- DataStore ---
--keep class androidx.datastore.*.** { *; }

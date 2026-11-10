@@ -8,13 +8,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.AlertDialog
@@ -35,6 +33,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,7 +50,6 @@ import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.rishavmishra010.railcam.data.db.PhotoRecord
 import com.rishavmishra010.railcam.ui.theme.Amber
-import com.rishavmishra010.railcam.ui.theme.Background
 import com.rishavmishra010.railcam.ui.theme.OverlayDark
 import com.rishavmishra010.railcam.viewmodel.PreviewViewModel
 import java.text.SimpleDateFormat
@@ -60,7 +61,7 @@ import java.util.Locale
 fun PreviewScreen(
     photoId: String,
     navController: NavController,
-    viewModel: PreviewViewModel = viewModel()
+    viewModel: PreviewViewModel = viewModel(),
 ) {
     val context = LocalContext.current
     val photo by viewModel.photo.collectAsState()
@@ -87,7 +88,7 @@ fun PreviewScreen(
                 title = { Text(currentPhoto.filename, fontSize = 14.sp, maxLines = 1) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
                     }
                 },
                 actions = {
@@ -116,7 +117,7 @@ fun PreviewScreen(
                         }.getOrNull() ?: mediaUri
 
                         val intent = Intent(Intent.ACTION_SEND).apply {
-                            type = "application/octet-stream" // Share as a raw document/file to preserve filename in WhatsApp
+                            type = "image/jpeg"
                             putExtra(Intent.EXTRA_STREAM, sharedUri)
                             putExtra(Intent.EXTRA_TITLE, currentPhoto.filename)
                             clipData = android.content.ClipData.newRawUri(null, sharedUri)
@@ -137,53 +138,107 @@ fun PreviewScreen(
             )
         }
     ) { paddingValues ->
+        var scale by remember { mutableStateOf(1f) }
+        var offset by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black)
                 .padding(paddingValues)
+                .pointerInput(Unit) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        scale = (scale * zoom).coerceIn(1f, 5f)
+                        if (scale > 1f) {
+                            val maxOffsetX = (size.width * (scale - 1f)) / 2f
+                            val maxOffsetY = (size.height * (scale - 1f)) / 2f
+                            val newX = (offset.x + pan.x).coerceIn(-maxOffsetX, maxOffsetX)
+                            val newY = (offset.y + pan.y).coerceIn(-maxOffsetY, maxOffsetY)
+                            offset = androidx.compose.ui.geometry.Offset(newX, newY)
+                        } else {
+                            offset = androidx.compose.ui.geometry.Offset.Zero
+                        }
+                    }
+                }
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onDoubleTap = {
+                            if (scale > 1f) {
+                                scale = 1f
+                                offset = androidx.compose.ui.geometry.Offset.Zero
+                            } else {
+                                scale = 2.5f
+                            }
+                        }
+                    )
+                }
         ) {
             AsyncImage(
                 model = currentPhoto.uri,
                 contentDescription = "Full Screen Photo",
                 contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer(
+                        scaleX = scale,
+                        scaleY = scale,
+                        translationX = offset.x,
+                        translationY = offset.y
+                    )
             )
 
             Column(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .background(OverlayDark)
-                    .padding(16.dp)
+                    .background(Color(0xF20D0E12))
+                    .padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 val dateString = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
                     .format(Date(currentPhoto.timestamp))
 
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     Text(
                         text = "${currentPhoto.client} • ${currentPhoto.zoneOrSubClient}",
                         color = Amber,
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    Text(dateString, color = Color.LightGray)
+                    Text(
+                        text = dateString,
+                        color = Color.LightGray.copy(alpha = 0.8f),
+                        fontSize = 12.sp
+                    )
                 }
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
                     val label = if (currentPhoto.railType.equals("TANGENT", ignoreCase = true)) "Tangent" else "Curve"
                     Text(
-                        text = "$label: ${currentPhoto.kmMarker} | OHE: ${currentPhoto.oheNumber}",
-                        color = Color.White
+                        text = "$label: ${currentPhoto.kmMarker}  •  OHE: ${currentPhoto.oheNumber}",
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Medium
                     )
                     Text(
                         text = "Tilt: ${String.format(Locale.getDefault(), "%.1f°", currentPhoto.tiltAngle)}",
-                        color = Color.White
+                        color = Color.White,
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
-                Spacer(modifier = Modifier.height(4.dp))
+
                 Text(
                     text = buildPhotoDetailLine(currentPhoto),
-                    color = Color.LightGray,
+                    color = Color.Gray,
                     fontSize = 12.sp
                 )
             }
@@ -193,14 +248,14 @@ fun PreviewScreen(
     if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Photo?") },
-            text = { Text("This will permanently remove the photo from your device. This cannot be undone.") },
+            title = { Text("Delete Photo?", fontWeight = FontWeight.Bold) },
+            text = { Text("This will permanently remove the photo record from your device storage. This action cannot be undone.") },
             confirmButton = {
                 TextButton(onClick = {
                     showDeleteDialog = false
                     viewModel.deletePhoto { navController.popBackStack() }
                 }) {
-                    Text("Delete", color = Color.Red)
+                    Text("Delete", color = Color(0xFFEF4444), fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
@@ -208,7 +263,7 @@ fun PreviewScreen(
                     Text("Cancel", color = Color.White)
                 }
             },
-            containerColor = Color.DarkGray,
+            containerColor = Color(0xFF16181F),
             titleContentColor = Color.White,
             textContentColor = Color.LightGray
         )

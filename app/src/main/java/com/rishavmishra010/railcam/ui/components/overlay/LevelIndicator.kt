@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -19,6 +22,7 @@ import com.rishavmishra010.railcam.ui.theme.LevelGreen
 import com.rishavmishra010.railcam.ui.theme.LevelYellow
 import java.util.Locale
 import kotlin.math.abs
+import kotlin.math.roundToInt
 
 private fun tiltIndicatorColor(tiltAngle: Float): Color {
     val absTilt = abs(tiltAngle)
@@ -32,13 +36,24 @@ private fun tiltIndicatorColor(tiltAngle: Float): Color {
     }
 }
 
+/**
+ * Live tilt angle as a rotating horizon line + numeric readout.
+ *
+ * The tilt is read through [getTilt] in places that keep sensor updates cheap:
+ *  - the line is rotated inside the Canvas draw block, so each sensor tick only
+ *    redraws (no recomposition or layout);
+ *  - the text and colour go through derivedStateOf, so they recompose only when the
+ *    displayed value (0.1° steps) or the colour band actually changes.
+ */
 @Composable
-fun LevelIndicator(tiltAngle: Float) {
-    val indicatorColor = tiltIndicatorColor(tiltAngle)
+fun LevelIndicator(getTilt: () -> Float) {
+    val tenths by remember { derivedStateOf { (getTilt() * 10f).roundToInt() } }
+    val indicatorColor by remember { derivedStateOf { tiltIndicatorColor(getTilt()) } }
+    val label = remember(tenths) { String.format(Locale.US, "%.1f°", tenths / 10f) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Text(
-            text = String.format(Locale.getDefault(), "%.1f°", tiltAngle),
+            text = label,
             color = indicatorColor,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
@@ -48,16 +63,14 @@ fun LevelIndicator(tiltAngle: Float) {
         )
 
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val canvasWidth = size.width
-            val canvasHeight = size.height
-
+            val tilt = getTilt()
             val lineLength = 160.dp.toPx()
-            val centerX = canvasWidth / 2f
-            val centerY = canvasHeight / 2f
+            val centerX = size.width / 2f
+            val centerY = size.height / 2f
 
-            rotate(degrees = tiltAngle) {
+            rotate(degrees = tilt) {
                 drawLine(
-                    color = indicatorColor,
+                    color = tiltIndicatorColor(tilt),
                     start = Offset(centerX - lineLength / 2f, centerY),
                     end = Offset(centerX + lineLength / 2f, centerY),
                     strokeWidth = 3.dp.toPx()

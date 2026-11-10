@@ -3,7 +3,6 @@ package com.rishavmishra010.railcam.domain.usecase
 import android.content.Context
 import com.rishavmishra010.railcam.data.db.PhotoRecord
 import com.rishavmishra010.railcam.data.repository.PhotoRepository
-import com.rishavmishra010.railcam.domain.model.CaptureSessionMetadata
 import com.rishavmishra010.railcam.domain.model.MetadataValues
 import com.rishavmishra010.railcam.domain.model.PendingPhoto
 import com.rishavmishra010.railcam.domain.model.RailType
@@ -21,20 +20,21 @@ class SavePhotoUseCase(private val repository: PhotoRepository) {
         val filename = if (isInstantMode) {
             FilenameGenerator.generateMobileFilename(pendingPhoto.takenAt)
         } else {
-            CaptureSessionMetadata.sessionFilename ?: FilenameGenerator.generate(metadata, pendingPhoto.takenAt)
+            FilenameGenerator.generate(metadata, pendingPhoto.takenAt)
         }
         var permanentUri: String? = null
 
         try {
-            permanentUri = StorageManager.savePermanentPhoto(
+            val saved = StorageManager.savePermanentPhoto(
                 context = context,
                 tempUri = pendingPhoto.uri,
                 filename = filename,
                 deleteTempAfterCopy = false
             )
+            permanentUri = saved.uri
 
             val record = PhotoRecord(
-                filename = filename,
+                filename = saved.displayName,
                 uri = permanentUri,
                 client = metadata.client.name,
                 zoneOrSubClient = metadata.zoneOrSubClient,

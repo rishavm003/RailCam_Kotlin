@@ -2,6 +2,9 @@ package com.rishavmishra010.railcam.navigation
 
 import android.app.Activity
 import android.content.pm.ActivityInfo
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -15,6 +18,8 @@ import com.rishavmishra010.railcam.ui.screens.CaptureScreen
 import com.rishavmishra010.railcam.ui.screens.GalleryScreen
 import com.rishavmishra010.railcam.ui.screens.HomeScreen
 import com.rishavmishra010.railcam.ui.screens.PreviewScreen
+
+private const val NAV_ANIM_MS = 180
 
 @Composable
 fun NavGraph(
@@ -35,7 +40,13 @@ fun NavGraph(
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route
+        startDestination = Screen.Home.route,
+        // Default Navigation-Compose transitions are 700 ms fades, which make every
+        // screen change feel sluggish. Short fades keep it smooth but snappy.
+        enterTransition = { fadeIn(tween(NAV_ANIM_MS)) },
+        exitTransition = { fadeOut(tween(NAV_ANIM_MS)) },
+        popEnterTransition = { fadeIn(tween(NAV_ANIM_MS)) },
+        popExitTransition = { fadeOut(tween(NAV_ANIM_MS)) }
     ) {
         composable(Screen.Home.route) {
             HomeScreen(navController = navController)

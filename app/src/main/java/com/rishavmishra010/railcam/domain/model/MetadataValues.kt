@@ -1,8 +1,5 @@
 package com.rishavmishra010.railcam.domain.model
 
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 enum class Client(val displayName: String, val fileCode: String) {
     INDIAN_RAILWAY("IR", "IR"),

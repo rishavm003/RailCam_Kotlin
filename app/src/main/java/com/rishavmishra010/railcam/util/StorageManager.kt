@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import java.io.File
 import java.io.FileOutputStream
 
@@ -15,31 +16,49 @@ object StorageManager {
     private const val TEMP_PHOTO_NAME = "pending_railcam_photo.jpg"
     private val unsafeFilenameChars = Regex("[^a-zA-Z0-9._-]")
 
-    fun saveTempPhoto(context: Context, bitmap: Bitmap): String {
-        val tempFile = File(context.cacheDir, TEMP_PHOTO_NAME)
+    /** Returns a unique path in the cache dir for a pending photo (nothing is written yet). */
+    fun newTempPhotoPath(context: Context): String =
+        File(context.cacheDir, "pending_railcam_${System.nanoTime()}.jpg").absolutePath
 
-        FileOutputStream(tempFile).use { out ->
+    /** Encodes [bitmap] as JPEG into [path]. */
+    fun writeTempPhoto(path: String, bitmap: Bitmap) {
+        FileOutputStream(File(path)).use { out ->
             bitmap.compress(Bitmap.CompressFormat.JPEG, 85, out)
         }
-
-        return tempFile.absolutePath
     }
+
+    fun saveTempPhoto(context: Context, bitmap: Bitmap): String {
+        val path = newTempPhotoPath(context)
+        writeTempPhoto(path, bitmap)
+        return path
+    }
+
+    /** Result of [savePermanentPhoto]: the MediaStore URI and the filename actually written. */
+    data class SavedPhoto(val uri: String, val displayName: String)
 
     fun savePermanentPhoto(
         context: Context,
         tempUri: String,
         filename: String,
         deleteTempAfterCopy: Boolean = false
-    ): String {
+    ): SavedPhoto {
         val safeFilename = sanitizeFilename(filename)
         val tempFile = File(tempUri)
         if (!tempFile.exists()) {
-            throw IllegalStateException("Temp photo file not found")
+            throw IllegalStateException(
+                "Temp photo file not found at '$tempUri'. " +
+                "The file may have been deleted due to memory pressure before Keep was tapped."
+            )
         }
 
         val resolver = context.contentResolver
+        // Several photos in one session share the same structured name, so a millisecond
+        // timestamp is appended to keep each file unique. This exact name is used on disk
+        // on every Android version and returned so the database records the same name.
+        val uniqueDisplayName = safeFilename.removeSuffix(".jpg") + "_${System.currentTimeMillis()}.jpg"
+
         val contentValues = ContentValues().apply {
-            put(MediaStore.MediaColumns.DISPLAY_NAME, safeFilename)
+            put(MediaStore.MediaColumns.DISPLAY_NAME, uniqueDisplayName)
             put(MediaStore.MediaColumns.MIME_TYPE, "image/jpeg")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 put(
@@ -57,7 +76,7 @@ object StorageManager {
                     throw IllegalStateException("Failed to create photo directory")
                 }
                 @Suppress("DEPRECATION")
-                put(MediaStore.Images.Media.DATA, File(picturesDir, safeFilename).absolutePath)
+                put(MediaStore.Images.Media.DATA, File(picturesDir, uniqueDisplayName).absolutePath)
             }
         }
 
@@ -65,11 +84,30 @@ object StorageManager {
             ?: throw IllegalStateException("Failed to create MediaStore entry")
 
         try {
-            resolver.openOutputStream(imageUri)?.use { outStream ->
-                tempFile.inputStream().use { inStream ->
-                    inStream.copyTo(outStream)
+            // Some OEM MediaStore implementations (Realme/OPPO/OnePlus) return null
+            // for openOutputStream on the first attempt. Retry up to 3 times with a
+            // short delay before giving up.
+            var outStream = resolver.openOutputStream(imageUri)
+            if (outStream == null) {
+                Log.w("StorageManager", "openOutputStream returned null on first try, retrying...")
+                for (attempt in 2..3) {
+                    Thread.sleep(100)
+                    outStream = resolver.openOutputStream(imageUri)
+                    if (outStream != null) {
+                        Log.d("StorageManager", "openOutputStream succeeded on attempt $attempt")
+                        break
+                    }
+                    Log.w("StorageManager", "openOutputStream still null on attempt $attempt")
                 }
-            } ?: throw IllegalStateException("Failed to write photo to MediaStore")
+            }
+            outStream?.use { stream ->
+                tempFile.inputStream().use { inStream ->
+                    inStream.copyTo(stream)
+                }
+            } ?: throw IllegalStateException(
+                "Failed to open output stream for MediaStore URI after 3 attempts. " +
+                "This is a known OEM MediaStore issue on Realme/OPPO/OnePlus devices."
+            )
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 contentValues.clear()
@@ -85,7 +123,7 @@ object StorageManager {
             deleteTempPhoto(tempUri)
         }
 
-        return imageUri.toString()
+        return SavedPhoto(imageUri.toString(), uniqueDisplayName)
     }
 
     fun deleteTempPhoto(tempUri: String?) {
