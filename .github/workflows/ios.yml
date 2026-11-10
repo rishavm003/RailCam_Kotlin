@@ -59,6 +59,24 @@ jobs:
             CODE_SIGNING_ALLOWED=NO | tee build.log | grep -E "error:|\*\*" || true
           grep -q "\*\* BUILD SUCCEEDED \*\*" build.log
 
+      # Unsigned .ipa for sideloading (Sideloadly / AltStore re-sign it with your Apple ID).
+      - name: Package unsigned .ipa
+        run: |
+          APP=build/Build/Products/Release-iphoneos/RailCam.app
+          test -d "$APP"
+          rm -rf Payload RailCam.ipa
+          mkdir Payload
+          cp -R "$APP" Payload/
+          zip -qry RailCam.ipa Payload
+          ls -lh RailCam.ipa
+
+      - name: Upload .ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: RailCam-unsigned-ipa
+          path: ios/RailCam.ipa
+          retention-days: 30
+
       - name: Upload logs on failure
         if: failure()
         uses: actions/upload-artifact@v4

@@ -48,3 +48,13 @@ unit tests on an iPhone simulator, and builds an unsigned Release build for real
 | `RailCam/Util` | Filename generator and 2:1 crop |
 | `RailCam/Views` | SwiftUI screens and controls |
 | `RailCamTests` | Unit tests |
+
+## Installing on an iPhone without a Mac
+
+Every run of the `iOS build` workflow uploads an unsigned **RailCam-unsigned-ipa** file (kept for 30 days):
+
+1. Open the repository's **Actions** tab, choose the latest successful *iOS build* run, and download **RailCam-unsigned-ipa** under *Artifacts* (you must be signed in to GitHub). Unzip it to get `RailCam.ipa`.
+2. Install [Sideloadly](https://sideloadly.io) (or AltStore) on your PC, plug in the iPhone, drag `RailCam.ipa` in, and sign in with your Apple ID.
+3. On the iPhone, open *Settings › General › VPN & Device Management*, trust your Apple ID, and turn on *Developer Mode* if asked.
+
+With a free Apple ID the app must be reinstalled every 7 days; a paid Apple Developer account removes that limit.
