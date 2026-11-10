@@ -1,0 +1,69 @@
+name: iOS build
+
+on:
+  push:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+  pull_request:
+    paths:
+      - "ios/**"
+      - ".github/workflows/ios.yml"
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: macos-15
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Pick an iPhone simulator
+        id: sim
+        run: |
+          UDID=$(xcrun simctl list devices available -j \
+            | jq -r '[.devices | to_entries[] | select(.key | contains("iOS")) | .value[] | select(.name | startswith("iPhone"))][0].udid')
+          echo "Using simulator $UDID"
+          echo "udid=$UDID" >> "$GITHUB_OUTPUT"
+
+      - name: Run unit tests on the simulator
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -project RailCam.xcodeproj \
+            -scheme RailCam \
+            -destination "id=${{ steps.sim.outputs.udid }}" \
+            CODE_SIGNING_ALLOWED=NO | tee test.log | grep -E "error:|warning: unre|Test Suite|Executed|\*\*" || true
+          grep -q "\*\* TEST SUCCEEDED \*\*" test.log
+
+      - name: Build for a real iPhone (unsigned)
+        run: |
+          set -o pipefail
+          xcodebuild build \
+            -project RailCam.xcodeproj \
+            -scheme RailCam \
+            -sdk iphoneos \
+            -configuration Release \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO | tee build.log | grep -E "error:|\*\*" || true
+          grep -q "\*\* BUILD SUCCEEDED \*\*" build.log
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-logs
+          path: |
+            ios/test.log
+            ios/build.log
